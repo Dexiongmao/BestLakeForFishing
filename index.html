@@ -127,7 +127,7 @@
 
           // 插入<li>列表
           for (var i in checkItems) {
-            if (i === 'Latitude' || i === 'WtrName' || i === 'Longitude' || i === 'AreaAcres' || i === 'County' || i === 'Spec_Reg_1' || i === 'Spec_Reg_2' || i === 'Reg_Type' || i === 'Reg_Link_1' || i === 'Reg_Link_2') {
+            if (i === 'Latitude' || i === 'WtrName' || i === 'Longitude' || i === 'AreaAcres' || i === 'County' || i === 'Spec_Reg_1' || i === 'Spec_Reg_2' || i === 'Reg_Type' || i === 'Reg_Link_1' || i === 'Reg_Link_2' || i ==='Spec_Reg') {
               continue;
             }
 
@@ -241,6 +241,9 @@
                       <h1 id="firstHeading" class="firstHeading">${item.lakeName}</h1>
                       <div id="bodyContent">
                         <p>
+                          ${item.content ? 'Recommended: ' + item.content : ''}
+                        </p>
+                        <p>
                           <!--<b>Uluru</b>also referred to as <b>Ayers Rock</b>-->
                           ${item.Reg_1.spec_reg_1 ? item.Reg_1.spec_reg_1 : ''}
                         </p>
@@ -293,7 +296,6 @@
                 // `
                 //
                 // google.maps.event.addListener(marker, 'click', cb(map, marker, content))
-                attachSecretMessage(marker,content)
                 markerList.push(marker)
               } else {
                 markerList.push(marker)
