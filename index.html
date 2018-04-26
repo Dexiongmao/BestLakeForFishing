@@ -7,7 +7,7 @@
     <script src="js/lodash.js"></script>
 
     <style>
-        /*初始化*/
+
         * {padding: 0; margin: 0;font-size: 17px;}
 
         html, body {height: 100%;margin: 0;padding: 0;}
@@ -85,9 +85,9 @@
         mapTypeId: 'terrain'
       });
 
-      var infoWindow = new google.maps.InfoWindow({map: map});                    // r_消息提示框
+      var infoWindow = new google.maps.InfoWindow({map: map});
 
-      // Locate current position                                                    // 显示本地位置
+      // Locate current position
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(function (position) {
           var pos = {
@@ -117,7 +117,7 @@
         url: './data/LakesEditedv2.json',
         success: (data) => {
           geoData = data
-          var 要找的鱼 = 'Rainbow'
+          var targetFish = 'Rainbow'
           var checkItems = data.features[0].properties
           var innerHTML = ''
           var number = 0
@@ -125,7 +125,7 @@
           var checkboxName = 'Rainbow'
           var choicedSpan = []
 
-          // 插入<li>列表
+          
           for (var i in checkItems) {
             if (i === 'Latitude' || i === 'WtrName' || i === 'Longitude' || i === 'AreaAcres' || i === 'County' || i === 'Spec_Reg_1' || i === 'Spec_Reg_2' || i === 'Reg_Type' || i === 'Reg_Link_1' || i === 'Reg_Link_2' || i ==='Spec_Reg') {
               continue;
@@ -153,26 +153,26 @@
           $('#checkbox').append(innerHTML)
           $('#checkbox li').off('click').on('click', function (e) {
             var fish = $.trim($(this).attr('data-name'))
-            $(this).children('input')[0].checked = !$(this).children('input')[0].checked    // 点击的时候若checked了则变为unchecked unchecked变为checked
+            $(this).children('input')[0].checked = !$(this).children('input')[0].checked    // switch
 
-            if ($(this).children('input')[0].checked) {       // 如果选中
-              找交集鱼(fish)
+            if ($(this).children('input')[0].checked) {       // if selected
+              findAndFish(fish)
               addSpan(fish)
             } else {
-              隐藏鱼(fish)
+              hideFish(fish)
               subSpan(fish)
             }
 
-            return false      // 避免事件捕获所造成的执行两次
+            return false
           })
 
-          var 需要处理的鱼组 = {}
-          var 交集的地点 = []
-          var 交集暂存鱼组 = []
-          var markerList = []             // 实例化地标数组
+          var fishInProcess = {}
+          var andLocation = []
+          var tempFish = []
+          var markerList = []
 
-          function 找交集鱼 (要找的鱼) {
-            var coordinateList = []         // 坐标列表
+          function findAndFish (TargetFish) {
+            var coordinateList = []
 
             for (var i = 0; i < data.features.length; i++) {
               var coords = []
@@ -180,12 +180,12 @@
               var properties = data.features[i].properties
               var Reg_2 = {spec_reg_2: '', reg_link_2: ''}
               var Reg_1 = {spec_reg_1: '', reg_link_1: ''}
-              var str = data.features[i].properties[要找的鱼]
+              var str = data.features[i].properties[TargetFish]
 
               let hasFishStr = str ? str : ''
 
               if (hasFishStr.indexOf('Yes') === 0) {
-                coords = geometry.coordinates                                         // 找到坐标
+                coords = geometry.coordinates
                 lakeName = properties.WtrName
                 properties.Spec_Reg_1 !== '' ? (Reg_1.spec_reg_1 = properties.Spec_Reg_1) : ''     // reg_1
                 properties.Reg_Link_1 !== '' ? (Reg_1.reg_link_1 = properties.Reg_Link_1) : ''
@@ -193,7 +193,7 @@
                 properties.Reg_Link_2 !== '' ? (Reg_2.reg_link_2 = properties.Reg_Link_2) : ''
 
                 if (hasFishStr.length > 3) {
-                  var introduction = hasFishStr.slice(8)                                // 取出介绍文字
+                  var introduction = hasFishStr.slice(8)
                   coordinateList.push({content: introduction, coords: coords, Reg_1: Reg_1, Reg_2: Reg_2, lakeName: lakeName})
                 } else {
                   coordinateList.push({coords: coords, Reg_1: Reg_1, Reg_2: Reg_2, lakeName: lakeName})
@@ -203,37 +203,37 @@
               }
             }
 
-            需要处理的鱼组[要找的鱼] = coordinateList      // 对象
-            show鱼(需要处理的鱼组)
+            fishInProcess[TargetFish] = coordinateList
+            showFish(fishInProcess)
           }
 
-          function 隐藏鱼 (fish) {
-            需要处理的鱼组 = _.omit(需要处理的鱼组, fish)
-            show鱼(需要处理的鱼组)
+          function hideFish (fish) {
+            fishInProcess = _.omit(fishInProcess, fish)
+            showFish(fishInProcess)
           }
 
-          function show鱼 (需要处理的鱼组) {
-            // 隐藏地图鱼标记
+          function showFish (fishInProcess) {
+
             for (var i = 0; i < markerList.length; i++) {
               markerList[i].setMap(null)
             }
 
             var tmpList = []
-            for (let i in 需要处理的鱼组) {
-              tmpList.push(需要处理的鱼组[i])
+            for (let i in fishInProcess) {
+              tmpList.push(fishInProcess[i])
             }
 
-            交集的地点 = _.intersectionBy(...tmpList, 'coords')
+            andLocation = _.intersectionBy(...tmpList, 'coords')
 
-            // 展示地标
-            for (let i = 0; i < 交集的地点.length; i++) {
-              var latLng = new google.maps.LatLng(交集的地点[i].coords[1], 交集的地点[i].coords[0])
+
+            for (let i = 0; i < andLocation.length; i++) {
+              var latLng = new google.maps.LatLng(andLocation[i].coords[1], andLocation[i].coords[0])
               var marker = new google.maps.Marker({
                 position: latLng,
                 map: map
               })
 
-              var item = 交集的地点[i]
+              var item = andLocation[i]
 
               var content = `
                     <div id="info-window-wrapper">
@@ -266,8 +266,8 @@
 
               attachSecretMessage(marker, content)
 
-              // 如果有提示
-              if (交集的地点[i].content) {
+
+              if (andLocation[i].content) {
                 // var infowindow = new google.maps.InfoWindow()
                 //
                 // // 闭包 显示提示框
@@ -339,20 +339,20 @@
     }
 
     /*
-     * data 操作 数据操作
+     * data
      */
     // map.data.loadGeoJson()
-    // map.data.addGeoJson(geoData)     // 自动产生marker
+    // map.data.addGeoJson(geoData)
     /*
-     * marker 操作 标记操作
+     * marker
      * https://developers.google.com/maps/documentation/javascript/examples/marker-remove?hl=zh-cn
      */
-    // marker.setMap(null);         // 隐藏
-    // markers[i].setMap(map);      // 显示
-    // marker.setMap(null); markers = []; // 消除
+    // marker.setMap(null);
+    // markers[i].setMap(map);
+    // marker.setMap(null); markers = [];
     /*
-     * infowindow 操作
-     *  var infowindow = new google.maps.InfoWindow({ content: 交集的地点[i].content })
+     * infowindow
+     *  var infowindow = new google.maps.InfoWindow({ content: andLocation[i].content })
      * infowindow.open(map, marker);
      * infowindow.close()
      */
